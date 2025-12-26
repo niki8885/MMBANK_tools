@@ -55,3 +55,17 @@ def request_items_data(input_csv_path, output_csv_path):
 
     result_df = pd.DataFrame(results)
     result_df.to_csv(output_csv_path, index=False)
+
+
+def get_type_names(type_ids):
+    if not type_ids:
+        return {}
+
+    url = "https://esi.evetech.net/latest/universe/names/"
+    clean_ids = list(set(int(tid) for tid in type_ids if pd.notna(tid)))
+
+    response = requests.post(url, json=clean_ids)
+    if response.status_code != 200:
+        return {tid: str(tid) for tid in clean_ids}
+
+    return {item["id"]: item["name"] for item in response.json()}
