@@ -25,7 +25,7 @@ def request_items_data(input_csv_path, output_csv_path):
     df = pd.read_csv(input_csv_path)
 
     if "name" not in df.columns:
-        raise ValueError("Входной CSV должен содержать колонку 'name'")
+        raise ValueError("Input should include 'name'")
 
     names = df["name"].dropna().unique().tolist()
 
