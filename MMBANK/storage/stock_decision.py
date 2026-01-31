@@ -54,29 +54,68 @@ def generate_indicator(item, index):
     x_start, x_end = 20, 280
     y_top, y_bot = 20, 40
 
-    draw.rounded_rectangle([x_start, y_top, x_end, y_bot], radius=10, outline="#444444", width=1)
+    draw.rounded_rectangle(
+        [x_start, y_top, x_end, y_bot],
+        radius=10,
+        outline="#444444",
+        width=1
+    )
 
-    p_min, p_max, p_avg, p_cur = item['price_min'], item['price_max'], item['price_avg'], item['price_current']
+    p_min = item['price_min']
+    p_max = item['price_max']
+    p_avg = item['price_avg']
+    p_cur = item['price_current']
 
-    def get_x(price):
-        if p_max == p_min: return (x_start + x_end) / 2
-        ratio = max(0, min(1, (price - p_min) / (p_max - p_min)))
-        return x_start + ratio * (x_end - x_start)
+    center_x = (x_start + x_end) / 2
+    half_width = (x_end - x_start) / 2
 
-    x_avg = get_x(p_avg)
-    x_cur = get_x(p_cur)
+    if p_avg <= 0:
+        return None
 
-    if p_cur >= p_avg:
-        draw.rounded_rectangle([x_avg, y_top, x_cur, y_bot], radius=3, fill="#228B22")
+    down_pct = (p_avg - p_min) / p_avg
+    up_pct = (p_max - p_avg) / p_avg
+    scale_pct = max(down_pct, up_pct, 1e-6)
+
+    def price_to_x(price):
+        pct = (price - p_avg) / p_avg
+        pct = max(-scale_pct, min(scale_pct, pct))
+        return center_x + (pct / scale_pct) * half_width
+
+    x_avg = center_x
+    x_cur = price_to_x(p_cur)
+
+    if x_cur >= x_avg:
+        draw.rounded_rectangle(
+            [x_avg, y_top, x_cur, y_bot],
+            radius=3,
+            fill="#228B22"
+        )
     else:
-        draw.rounded_rectangle([x_cur, y_top, x_avg, y_bot], radius=3, fill="#B22222")
+        draw.rounded_rectangle(
+            [x_cur, y_top, x_avg, y_bot],
+            radius=3,
+            fill="#B22222"
+        )
 
-    draw.line([(x_avg, y_top - 2), (x_avg, y_bot + 2)], fill="white", width=1)
-    draw.polygon([(x_cur, y_top - 2), (x_cur - 4, y_top - 8), (x_cur + 4, y_top - 8)], fill="#00FFFF")
+    draw.line(
+        [(x_avg, y_top - 3), (x_avg, y_bot + 3)],
+        fill="#FFFFFF",
+        width=1
+    )
+
+    draw.polygon(
+        [
+            (x_cur, y_top - 2),
+            (x_cur - 4, y_top - 8),
+            (x_cur + 4, y_top - 8)
+        ],
+        fill="#00FFFF"
+    )
 
     path = os.path.join(TEMP_DIR, f"ind_{index}.png")
     img.save(path)
     return path
+
 
 
 def create_final_report(data_list):
